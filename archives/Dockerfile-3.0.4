@@ -1,0 +1,21 @@
+FROM alpine:3.6
+ 
+RUN apk add --update wget gcc gzip tar libc-dev ca-certificates perl make coreutils gnupg linux-headers zlib-dev \
+    && wget https://github.com/openssl/openssl/archive/refs/tags/openssl-3.0.4.tar.gz && ls -lha \
+    && tar -zxf openssl-3.0.4.tar.gz && cd openssl-openssl-3.0.4 \
+    && perl ./Configure linux-x86_64 --prefix=/usr --libdir=lib --openssldir=/etc/ssl fips shared zlib enable-md2 enable-ec_nistp_64_gcc_128 -DOPENSSL_NO_BUF_FREELISTS -Wa,--noexecstack enable-ssl2 \
+    && make && make test \
+    && make install \
+    && openssl version -a \
+    && openssl list -providers \
+    && openssl fipsinstall -out /etc/ssl/fipsmodule.cnf -module /usr/lib/ossl-modules/fips.so \
+    && sed -i "s/^# fips = fips_sect/fips = fips_sect/g" /etc/ssl/openssl.cnf \
+    && sed -i "s/^# activate = 1/activate = 1/g" /etc/ssl/openssl.cnf \
+    && sed -i '18s/$/\n.include \/etc\/ssl\/fipsmodule.cnf/g' /etc/ssl/openssl.cnf \
+    sed -i -E 's,(providers = provider_sect),\1\nalg_section = algorithm_sect\n\n[algorithm_sect]\ndefault_properties = fips=yes,' /etc/ssl/openssl.cnf \
+    && openssl list -providers \
+    && openssl md5 /etc/hosts \
+    && rm -rf /openssl* /var/cache/apk/* /root/.gnupg/ ~/.ash_history /root/.wget-hsts \
+    && apk del wget gcc gzip tar libc-dev ca-certificates perl make coreutils gnupg linux-headers
+ 
+ENTRYPOINT ["openssl"]
