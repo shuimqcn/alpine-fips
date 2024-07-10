@@ -41,6 +41,10 @@ jobs:
         ls
         pwd
         docker run --rm ${{ env.docker_user }}/alpine-fips:latest openssl list -providers
+        docker run -itd -v test:/test --name =shuimqcn_test ${{ env.docker_user }}/alpine-fips:latest sh
+        docker exec -it shuimqcn_test chmod a+x /test/*
+        docker exec -it shuimqcn_test /test/fips_test
+        docker rm -f shuimqcn_test
         
 
     - name: Push to Docker Hub
