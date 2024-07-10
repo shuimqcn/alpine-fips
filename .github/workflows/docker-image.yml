@@ -1,6 +1,7 @@
 name: Build, Test, and Push Docker Image
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - action
