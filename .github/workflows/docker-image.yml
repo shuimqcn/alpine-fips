@@ -21,8 +21,6 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
 
-    - uses: actions/checkout@v4
-
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
@@ -32,12 +30,16 @@ jobs:
         username: ${{ env.docker_user }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+    - uses: actions/checkout@v4
+  
     - name: Build alpine 3.19  without push
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
         file: ./Dockerfile-3.19
-        platforms: linux/amd64,linux/arm64
+        # platforms: linux/amd64,linux/arm64
         push: false
         load: true
         tags:  ${{ env.docker_user }}/alpine-fips:3.19
@@ -59,20 +61,24 @@ jobs:
     - name: Build alpine-fips 3.19 and Push to Docker Hub
       if: success() 
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
         file: ./Dockerfile-3.19
-        platforms: linux/amd64,linux/arm64
+        # platforms: linux/amd64,linux/arm64
         push: true
         tags: ${{ env.docker_user }}/alpine-fips:3.19
 
 
     - name: Build alpine 3.20 without push
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64
+        # platforms: linux/amd64,linux/arm64
         push: false
         load: true
         tags: |
@@ -96,10 +102,12 @@ jobs:
     - name: Build alpine-fips 3.20 and Push to Docker Hub
       if: success() 
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64
+        # platforms: linux/amd64,linux/arm64
         push: true
         tags: |
             ${{ env.docker_user }}/alpine-fips:latest
