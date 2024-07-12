@@ -2,12 +2,14 @@ name: Build, Test, and Push Docker Image
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0" 
   push:
     branches:
       - action
     paths:
       - 'Dockerfile'
-      - 'test/fips_test'
+      - 'Dockerfile-3.19'
 env:
   docker_user: ${{ vars.DOCKER_HUB_USERNAME}}
 
@@ -26,7 +28,16 @@ jobs:
         username: ${{ env.docker_user }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-    - name: Build
+    - name: Build alpine 3.19
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile-3.19
+        push: false
+        load: true
+        tags:  ${{ env.docker_user }}/alpine-fips:3.19
+
+    - name: Build alpine 3.20
       uses: docker/build-push-action@v6
       with:
         context: .
@@ -35,11 +46,37 @@ jobs:
         load: true
         tags: |
             ${{ env.docker_user }}/alpine-fips:latest
-            ${{ env.docker_user }}/alpine-fips:3.19
-    - name: Run tests
+            ${{ env.docker_user }}/alpine-fips:3.20
+
+    - name: Run tests alpine-fips 3.19
       run: |
         ls
         pwd
+        echo "test for alpine-fips 3.19"
+        docker run --rm ${{ env.docker_user }}/alpine-fips:3.19 openssl list -providers
+        docker run -itd -v ./test:/test --name=alpine_test ${{ env.docker_user }}/alpine-fips:latest sh
+        docker exec alpine_test ls -lh /test 
+        docker exec alpine_test chmod a+x /test/fips_test
+        docker exec alpine_test ls -lh /test 
+        docker exec alpine_test /test/fips_test
+        docker rm -f alpine_test
+        
+
+    - name: Push to Docker Hub
+      if: success() 
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ env.docker_user }}/alpine-fips:3.19
+
+
+    - name: Run tests for alpine-fips latest
+      run: |
+        ls
+        pwd
+        echo "test for alpine-fips latest"
         docker run --rm ${{ env.docker_user }}/alpine-fips:latest openssl list -providers
         docker run -itd -v ./test:/test --name=alpine_test ${{ env.docker_user }}/alpine-fips:latest sh
         docker exec alpine_test ls -lh /test 
@@ -58,4 +95,4 @@ jobs:
         push: true
         tags: |
             ${{ env.docker_user }}/alpine-fips:latest
-            ${{ env.docker_user }}/alpine-fips:3.19
+            ${{ env.docker_user }}/alpine-fips:3.20
