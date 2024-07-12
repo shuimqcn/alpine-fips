@@ -1,5 +1,5 @@
 # Stage 1: Build OpenSSL with FIPS provider in Alpine Linux
-FROM alpine:3.20 as builder
+FROM alpine:3.19 as builder
 
 ENV OPENSSL_VER=3.0.9
  
@@ -27,7 +27,7 @@ RUN apk add --update wget gcc gzip tar libc-dev ca-certificates perl make coreut
 # Above content can save into a single Dockerfile to build Alpine FIPS image
  
 # Stage 2: Install openssl by apk command and enable FIPS provider with the FIPS library built in stage 1.
-FROM alpine:3.20 as midd
+FROM alpine:3.19 as midd
 
 COPY --from=builder /usr/lib/ossl-modules/fips.so /tmp/fips.so
 

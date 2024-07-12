@@ -2,12 +2,15 @@ name: Build, Test, and Push Docker Image
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0" 
   push:
     branches:
       - action
     paths:
       - 'Dockerfile'
-      - 'test/fips_test'
+      - 'Dockerfile-3.19'
+      - 'Dockerfile*'
 env:
   docker_user: ${{ vars.DOCKER_HUB_USERNAME}}
 
@@ -15,7 +18,8 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -26,21 +30,26 @@ jobs:
         username: ${{ env.docker_user }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-    - name: Build
+    - uses: actions/checkout@v4
+  
+    - name: Build alpine 3.19  without push
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
-        file: ./Dockerfile
+        file: ./Dockerfile-3.19
+        # platforms: linux/amd64,linux/arm64
         push: false
         load: true
-        tags: |
-            ${{ env.docker_user }}/alpine-fips:latest
-            ${{ env.docker_user }}/alpine-fips:3.19
-    - name: Run tests
+        tags:  ${{ env.docker_user }}/alpine-fips:3.19
+
+    - name: Run tests alpine-fips 3.19
       run: |
         ls
         pwd
-        docker run --rm ${{ env.docker_user }}/alpine-fips:latest openssl list -providers
+        echo "test for alpine-fips 3.19"
+        docker run --rm ${{ env.docker_user }}/alpine-fips:3.19 openssl list -providers
         docker run -itd -v ./test:/test --name=alpine_test ${{ env.docker_user }}/alpine-fips:latest sh
         docker exec alpine_test ls -lh /test 
         docker exec alpine_test chmod a+x /test/fips_test
@@ -49,13 +58,57 @@ jobs:
         docker rm -f alpine_test
         
 
-    - name: Push to Docker Hub
+    - name: Build alpine-fips 3.19 and Push to Docker Hub
       if: success() 
       uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+      with:
+        context: .
+        file: ./Dockerfile-3.19
+        # platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ env.docker_user }}/alpine-fips:3.19
+
+
+    - name: Build alpine 3.20 without push
+      uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
       with:
         context: .
         file: ./Dockerfile
+        # platforms: linux/amd64,linux/arm64
+        push: false
+        load: true
+        tags: |
+            ${{ env.docker_user }}/alpine-fips:latest
+            ${{ env.docker_user }}/alpine-fips:3.20
+
+    - name: Run tests for alpine-fips 3.20
+      run: |
+        ls
+        pwd
+        echo "test for alpine-fips 3.20"
+        docker run --rm ${{ env.docker_user }}/alpine-fips:3.20 openssl list -providers
+        docker run -itd -v ./test:/test --name=alpine_test ${{ env.docker_user }}/alpine-fips:latest sh
+        docker exec alpine_test ls -lh /test 
+        docker exec alpine_test chmod a+x /test/fips_test
+        docker exec alpine_test ls -lh /test 
+        docker exec alpine_test /test/fips_test
+        docker rm -f alpine_test
+        
+
+    - name: Build alpine-fips 3.20 and Push to Docker Hub
+      if: success() 
+      uses: docker/build-push-action@v6
+      env:
+          DOCKER_BUILD_RECORD_UPLOAD: false
+      with:
+        context: .
+        file: ./Dockerfile
+        # platforms: linux/amd64,linux/arm64
         push: true
         tags: |
             ${{ env.docker_user }}/alpine-fips:latest
-            ${{ env.docker_user }}/alpine-fips:3.19
+            ${{ env.docker_user }}/alpine-fips:3.20
