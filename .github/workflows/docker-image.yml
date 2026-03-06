@@ -33,7 +33,7 @@ jobs:
     - uses: actions/checkout@v5
   
     - name: Build alpine 3.19  without push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
           DOCKER_BUILD_RECORD_UPLOAD: false
       with:
@@ -60,7 +60,7 @@ jobs:
 
     - name: Build alpine-fips 3.19 and Push to Docker Hub
       if: success() 
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
           DOCKER_BUILD_RECORD_UPLOAD: false
       with:
@@ -72,7 +72,7 @@ jobs:
 
 
     - name: Build alpine 3.20 without push
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
           DOCKER_BUILD_RECORD_UPLOAD: false
       with:
@@ -101,7 +101,7 @@ jobs:
 
     - name: Build alpine-fips 3.20 and Push to Docker Hub
       if: success() 
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       env:
           DOCKER_BUILD_RECORD_UPLOAD: false
       with:
