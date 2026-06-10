@@ -1,4 +1,4 @@
-FROM alpine:3.6
+FROM alpine:3.24
  
 RUN apk add --update wget gcc gzip tar libc-dev ca-certificates perl make coreutils gnupg linux-headers zlib-dev \
     && wget https://github.com/openssl/openssl/archive/refs/tags/openssl-3.0.4.tar.gz && ls -lha \
